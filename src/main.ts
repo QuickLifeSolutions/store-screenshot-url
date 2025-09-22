@@ -19,12 +19,14 @@ const {
     waitUntil,
     delay,
     width,
+    height,
     scrollToBottom,
     delayAfterScrolling,
     waitUntilNetworkIdleAfterScroll,
     waitUntilNetworkIdleAfterScrollTimeout,
     proxy,
     selectorsToHide,
+    fullPage,
 } = await parseInput(input);
 
 const requestHandlerTimeoutSecs = calculateRequestHandlerTimeoutSecs(
@@ -48,7 +50,7 @@ const puppeteerCrawler = new PuppeteerCrawler({
             goToOptions!.waitUntil = waitUntil;
             goToOptions!.timeout = TIMEOUT_MS;
 
-            await page.setViewport({ width, height: 1080 });
+            await page.setViewport({ width, height });
         },
     ],
     requestHandler: async ({ page }) => {
@@ -91,9 +93,17 @@ const puppeteerCrawler = new PuppeteerCrawler({
             });
         }
 
+        if (!fullPage) {
+            await page.evaluate(() => {
+                window.scrollTo(0, 0);
+            }).catch(() => {
+                log.warning("Failed to reset scroll position before capturing the screenshot.");
+            });
+        }
+
         log.info("Saving screenshot...");
         const screenshotKey = input.urls?.length ? generateUrlStoreKey(page.url()) : 'screenshot';
-        const screenshotBuffer = await page.screenshot({ fullPage: true });
+        const screenshotBuffer = await page.screenshot({ fullPage });
         await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: "image/png" });
         const screenshotUrl = `https://api.apify.com/v2/key-value-stores/${APIFY_DEFAULT_KEY_VALUE_STORE_ID}/records/${screenshotKey}?disableRedirect=true`;
         log.info(`Screenshot saved, you can view it here: \n${screenshotUrl}`);

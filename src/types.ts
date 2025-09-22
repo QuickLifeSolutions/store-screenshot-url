@@ -5,6 +5,7 @@ export type Input = {
     urls: string[];
     waitUntil: string;
     viewportWidth: number;
+    viewportHeight: number;
     delay: number;
     scrollToBottom: boolean;
     delayAfterScrolling: number;
@@ -14,4 +15,5 @@ export type Input = {
         useApifyProxy?: boolean | undefined;
     }) | undefined;
     selectorsToHide?: string;
+    fullPage?: boolean;
 };

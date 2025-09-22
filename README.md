@@ -14,7 +14,9 @@ The input should be a JSON object containing specifications for capturing the sc
 | `waitUntil`                       | String  | Specifies when to take the screenshot based on page load state        | "load", "domcontentloaded", "networkidle2", "networkidle0"       |
 | `delay`                           | Number  | Delay in milliseconds after `waitUntil` event before taking screenshot| 0 to 3,600,000                                                   |
 | `viewportWidth`                   | Number  | Width of the viewport for the screenshot                              | 100 to 3840                                                      |
+| `viewportHeight`                  | Number  | Height of the viewport for the screenshot                             | 100 to 4320                                                      |
 | `scrollToBottom`                  | Boolean | Whether to scroll to the bottom of the page before taking a screenshot| true, false                                                      |
+| `fullPage`                        | Boolean | Capture the entire page (`true`) or only the visible viewport (`false`)| true, false                                                      |
 | `delayAfterScrolling`             | Number  | Delay after scrolling to the bottom before taking the screenshot      | 0 to 3,600,000                                                   |
 | `waitUntilNetworkIdleAfterScroll` | Boolean | Wait for network to become idle after scrolling before screenshot     | true, false                                                      |
 | `waitUntilNetworkIdleAfterScrollTimeout` | Number | Max wait time for network idle after scrolling              | 1,000 to 3,600,000                                               |
