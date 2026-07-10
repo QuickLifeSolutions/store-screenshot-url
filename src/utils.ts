@@ -3,7 +3,7 @@ export const generateUrlStoreKey = (urlString: string): string => {
     const urlObject = new URL(urlString);
     const domain = urlObject.hostname;
     if (!domain) {
-        throw new Error("Invalid URL format");
+        throw new Error('Invalid URL format');
     }
 
     // Calculate hash of the URL
@@ -13,24 +13,24 @@ export const generateUrlStoreKey = (urlString: string): string => {
     }
 
     // Calculate available space for the hash in the key
-    const availableSpace = 52 - domain.length - 1;  // 1 for the hyphen separator
+    const availableSpace = 52 - domain.length - 1; // 1 for the hyphen separator
 
     // Truncate the hash if necessary to fit within available space
     const truncatedHash = urlHash.substring(0, availableSpace);
 
     // Create the key using domain and truncated hash
-    let key = `${domain}-${truncatedHash}`;
+    const key = `${domain}-${truncatedHash}`;
 
     // Replace dots with hyphens and limit the length to 52 characters
     return `screenshot-${key.replace(/\./g, '-').substring(0, 52)}`;
-}
+};
 
 export const calculateRequestHandlerTimeoutSecs = (
     scrollToBottom: boolean,
     waitUntilNetworkIdleAfterScroll: boolean,
     waitUntilNetworkIdleAfterScrollTimeout: number,
     delayAfterScrolling: number,
-    delay: number
+    delay: number,
 ): number => {
     const REQUEST_HANDLER_TIMEOUT_SECS_BASE = 60;
 

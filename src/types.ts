@@ -1,4 +1,4 @@
-import { ProxyConfigurationOptions } from "crawlee";
+import { ProxyConfigurationOptions } from 'crawlee';
 
 export type Input = {
     url: string;

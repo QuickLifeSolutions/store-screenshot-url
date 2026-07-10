@@ -1,9 +1,9 @@
-import { Actor, ProxyConfigurationOptions, log } from "apify";
+import { Actor, ProxyConfigurationOptions, log } from 'apify';
 
-import type { PuppeteerLifeCycleEvent } from "puppeteer";
-import { RequestList, Request } from "crawlee";
+import type { PuppeteerLifeCycleEvent } from 'puppeteer';
+import { RequestList, Request } from 'crawlee';
 
-import type { Input } from "./types.js";
+import type { Input } from './types';
 
 const crash = async (errorMessage: string) => {
     log.error(errorMessage);
@@ -27,7 +27,7 @@ export async function parseInput(input: Input): Promise<{
     fullPage: boolean;
 }> {
     if (!input) {
-        await crash("Did not receive input. Please make sure that INPUT is stored in Key-Value store");
+        await crash('Did not receive input. Please make sure that INPUT is stored in Key-Value store');
     }
 
     const parsedInput: {
@@ -47,21 +47,21 @@ export async function parseInput(input: Input): Promise<{
         fullPage: boolean;
     } = {
         urls: [],
-        waitUntil: "load",
-        width: 0,
-        height: 0,
-        delay: 0,
-        scrollToBottom: false,
-        delayAfterScrolling: 0,
-        waitUntilNetworkIdleAfterScroll: false,
-        waitUntilNetworkIdleAfterScrollTimeout: 30,
+        waitUntil: input.waitUntil as PuppeteerLifeCycleEvent,
+        width: typeof input.viewportWidth === 'number' ? input.viewportWidth : 1280,
+        height: typeof input.viewportHeight === 'number' ? input.viewportHeight : 1080,
+        delay: typeof input.delay === 'number' ? input.delay : 0,
+        scrollToBottom: input.scrollToBottom || false,
+        delayAfterScrolling: input.delayAfterScrolling || 2500,
+        waitUntilNetworkIdleAfterScroll: input.waitUntilNetworkIdleAfterScroll || false,
+        waitUntilNetworkIdleAfterScrollTimeout: input.waitUntilNetworkIdleAfterScrollTimeout || 30000,
         proxy: input.proxy || { useApifyProxy: true },
-        selectorsToHide: input.selectorsToHide?.trim() || "",
-        fullPage: true,
+        selectorsToHide: input.selectorsToHide?.trim() || '',
+        fullPage: input.fullPage ?? true,
     };
 
     // Process url
-    if (!input.url && !input.urls?.length) crash("Input is missing url field");
+    if (!input.url && !input.urls?.length) crash('Input is missing url field');
 
     const startUrls = [];
     if (input.url) startUrls.push(input.url);
@@ -80,38 +80,36 @@ export async function parseInput(input: Input): Promise<{
     parsedInput.urls = parsedInput.urls.flatMap((u) => {
         let url = u.trim();
 
-        if (!url.startsWith("http")) {
+        if (!url.startsWith('http')) {
             url = `http://${url}`;
         }
 
         try {
-            new URL(url);
+            const parsedUrl = new URL(url);
+            return [parsedUrl.toString()];
         } catch (error) {
-            crash(`Skipping url "${url}" because it is not valid.`);
-            return [];
+            throw new Error(`Skipping url "${url}" because it is not valid.`);
         }
-
-        return [url];
     });
 
     // Process waitUntil
-    const waitUntilOptions: PuppeteerLifeCycleEvent[] = ["load", "domcontentloaded", "networkidle2", "networkidle0"];
+    const waitUntilOptions: PuppeteerLifeCycleEvent[] = ['load', 'domcontentloaded', 'networkidle2', 'networkidle0'];
 
     function isWaitUntilOption(option: string): option is PuppeteerLifeCycleEvent {
-        return waitUntilOptions.includes(option as PuppeteerLifeCycleEvent);
+        return waitUntilOptions.indexOf(option as PuppeteerLifeCycleEvent) !== -1;
     }
 
     if (!isWaitUntilOption(input.waitUntil)) {
         await crash(
             `Value in parameter waitUntil - "${input.waitUntil
-            }" - is not one of the allowed values: "${waitUntilOptions.join('", "')}"`
+            }" - is not one of the allowed values: "${waitUntilOptions.join('", "')}"`,
         );
     }
 
     parsedInput.waitUntil = input.waitUntil as PuppeteerLifeCycleEvent;
 
     // Process viewportWidth
-    if (typeof input.viewportWidth !== "number" || Number.isNaN(input.viewportWidth)) {
+    if (typeof input.viewportWidth !== 'number' || Number.isNaN(input.viewportWidth)) {
         await crash(`Viewport width "${input.viewportWidth}" is not a number.`);
     }
     if (input.viewportWidth < 100) {
@@ -124,7 +122,7 @@ export async function parseInput(input: Input): Promise<{
     parsedInput.width = input.viewportWidth;
 
     // Process viewportHeight
-    const viewportHeight = typeof input.viewportHeight === "number"
+    const viewportHeight = typeof input.viewportHeight === 'number'
         ? input.viewportHeight
         : 1080;
 
@@ -141,7 +139,7 @@ export async function parseInput(input: Input): Promise<{
     parsedInput.height = viewportHeight;
 
     // Process delay
-    if (!input.delay && typeof input.delay !== "number") {
+    if (!input.delay && typeof input.delay !== 'number') {
         await crash(`Delay "${input.delay}" is not a number.`);
     }
     if (input.delay < 0) {
@@ -157,13 +155,13 @@ export async function parseInput(input: Input): Promise<{
     parsedInput.delayAfterScrolling = input.delayAfterScrolling || 0;
     parsedInput.waitUntilNetworkIdleAfterScrollTimeout = input.waitUntilNetworkIdleAfterScrollTimeout || 30;
 
-    if (typeof input.fullPage !== "undefined" && typeof input.fullPage !== "boolean") {
+    if (typeof input.fullPage !== 'undefined' && typeof input.fullPage !== 'boolean') {
         await crash(`Full page option "${input.fullPage}" must be a boolean.`);
     }
     parsedInput.fullPage = input.fullPage ?? true;
 
     if (!parsedInput.urls.length) {
-        await crash("No valid urls found.");
+        await crash('No valid urls found.');
     }
 
     return parsedInput;
