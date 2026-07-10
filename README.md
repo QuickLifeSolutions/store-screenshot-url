@@ -10,7 +10,7 @@ The input should be a JSON object containing specifications for capturing the sc
 
 | Field                             | Type    | Description                                                           | Allowed Values                                                   |
 | --------------------------------- | ------- | --------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `url`                             | String  | URL of the website to capture                                         | Any valid URL string                                             |
+| `urls`                            | Array   | List of website URLs to capture                                       | One or more valid URL strings                                    |
 | `waitUntil`                       | String  | Specifies when to take the screenshot based on page load state        | "load", "domcontentloaded", "networkidle2", "networkidle0"       |
 | `delay`                           | Number  | Delay in milliseconds after `waitUntil` event before taking screenshot| 0 to 3,600,000                                                   |
 | `viewportWidth`                   | Number  | Width of the viewport for the screenshot                              | 100 to 3840                                                      |
