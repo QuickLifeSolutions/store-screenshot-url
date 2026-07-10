@@ -43,12 +43,27 @@
             "maximum": 3840,
             "unit": "px"
         },
+        "viewportHeight": {
+            "title": "Height",
+            "type": "integer",
+            "description": "How tall should the website's viewport be",
+            "default": 1080,
+            "minimum": 100,
+            "maximum": 4320,
+            "unit": "px"
+        },
         "scrollToBottom": {
             "title": "Scroll to bottom",
             "type": "boolean",
             "description": "Should the browser scroll to the bottom of the page before taking a screenshot",
             "default": false,
             "sectionCaption": "Scrolling"
+        },
+        "fullPage": {
+            "title": "Capture full page",
+            "type": "boolean",
+            "description": "Enable to capture the full page height. Disable to capture only the visible viewport (above the fold).",
+            "default": true
         },
         "delayAfterScrolling": {
             "title": "Delay After Scrolling",
