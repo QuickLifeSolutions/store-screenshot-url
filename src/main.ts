@@ -12,7 +12,7 @@ const NAVIGATION_TIMEOUT_SECS = 3600;
 const TIMEOUT_MS = 3600000;
 
 await Actor.init();
-const input = (await Actor.getInput() ?? {}) as Input;
+const input = await Actor.getInput() as Input | null;
 
 const {
     urls,
@@ -64,8 +64,11 @@ const puppeteerCrawler = new PuppeteerCrawler({
             try {
                 await page.evaluate(async () => {
                     let i = 0;
-                    while (i < document.body.scrollHeight) {
+                    let iterations = 0;
+                    const maxIterations = Math.ceil(document.body.scrollHeight / 250) + 20;
+                    while (i < document.body.scrollHeight && iterations < maxIterations) {
                         i += 250;
+                        iterations += 1;
                         await new Promise<void>((resolve) => {
                             setTimeout(resolve, 50);
                         });
@@ -104,7 +107,7 @@ const puppeteerCrawler = new PuppeteerCrawler({
         }
 
         log.info('Saving screenshot...');
-        const screenshotKey = input.urls?.length ? generateUrlStoreKey(page.url()) : 'screenshot';
+        const screenshotKey = urls.length ? generateUrlStoreKey(page.url()) : 'screenshot';
         const screenshotBuffer = await page.screenshot({ fullPage });
         await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: 'image/png' });
         const screenshotUrl = `https://api.apify.com/v2/key-value-stores/${APIFY_DEFAULT_KEY_VALUE_STORE_ID}`
