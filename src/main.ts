@@ -66,7 +66,6 @@ const puppeteerCrawler = new PuppeteerCrawler({
                     let i = 0;
                     let iterations = 0;
                     const maxIterations = 400;
-                    let lastScrollHeight = document.body.scrollHeight;
                     while (i < document.body.scrollHeight && iterations < maxIterations) {
                         i += 250;
                         iterations += 1;
@@ -74,10 +73,6 @@ const puppeteerCrawler = new PuppeteerCrawler({
                             setTimeout(resolve, 50);
                         });
                         window.scrollTo(0, i);
-                        const currentScrollHeight = document.body.scrollHeight;
-                        if (currentScrollHeight > lastScrollHeight) {
-                            lastScrollHeight = currentScrollHeight;
-                        }
                     }
                 });
                 if (waitUntilNetworkIdleAfterScroll) {
@@ -91,7 +86,7 @@ const puppeteerCrawler = new PuppeteerCrawler({
                     await sleep(delayAfterScrolling);
                 }
             } catch (error) {
-                log.warning('Scrolling to bottom of the page failed!');
+                log.warning('Scrolling to bottom of the page failed!', { error: String(error) });
             }
         }
 
