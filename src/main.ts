@@ -64,15 +64,24 @@ const puppeteerCrawler = new PuppeteerCrawler({
             try {
                 await page.evaluate(async () => {
                     let i = 0;
-                    let iterations = 0;
-                    const maxIterations = 400;
-                    while (i < document.body.scrollHeight && iterations < maxIterations) {
-                        i += 250;
-                        iterations += 1;
+                    let stagnantIterations = 0;
+                    let previousScrollHeight = 0;
+
+                    while (stagnantIterations < 3) {
+                        const { scrollHeight } = document.body;
+                        if (scrollHeight === previousScrollHeight) {
+                            stagnantIterations += 1;
+                        } else {
+                            stagnantIterations = 0;
+                            previousScrollHeight = scrollHeight;
+                        }
+
+                        i = Math.min(i + 250, scrollHeight);
+                        window.scrollTo(0, i);
+
                         await new Promise<void>((resolve) => {
                             setTimeout(resolve, 50);
                         });
-                        window.scrollTo(0, i);
                     }
                 });
                 if (waitUntilNetworkIdleAfterScroll) {
@@ -107,7 +116,7 @@ const puppeteerCrawler = new PuppeteerCrawler({
         }
 
         log.info('Saving screenshot...');
-        const screenshotKey = input && input.url ? 'screenshot' : generateUrlStoreKey(page.url());
+        const screenshotKey = input && input.url && !input.urls?.length ? 'screenshot' : generateUrlStoreKey(page.url());
         const screenshotBuffer = await page.screenshot({ fullPage });
         await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: 'image/png' });
         const screenshotUrl = `https://api.apify.com/v2/key-value-stores/${APIFY_DEFAULT_KEY_VALUE_STORE_ID}`
