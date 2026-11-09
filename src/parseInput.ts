@@ -50,7 +50,7 @@ export async function parseInput(input: Input | null): Promise<{
         fullPage: boolean;
     } = {
         urls: [],
-        waitUntil: inputValue.waitUntil as PuppeteerLifeCycleEvent,
+        waitUntil: (inputValue.waitUntil ?? 'load') as PuppeteerLifeCycleEvent,
         width: typeof inputValue.viewportWidth === 'number' ? inputValue.viewportWidth : 1280,
         height: typeof inputValue.viewportHeight === 'number' ? inputValue.viewportHeight : 1080,
         delay: typeof inputValue.delay === 'number' ? inputValue.delay : 0,
@@ -58,7 +58,7 @@ export async function parseInput(input: Input | null): Promise<{
         delayAfterScrolling: inputValue.delayAfterScrolling ?? 2500,
         waitUntilNetworkIdleAfterScroll: inputValue.waitUntilNetworkIdleAfterScroll || false,
         waitUntilNetworkIdleAfterScrollTimeout: inputValue.waitUntilNetworkIdleAfterScrollTimeout ?? 30000,
-        proxy: inputValue.proxy || { useApifyProxy: true },
+        proxy: inputValue.proxy || { useApifyProxy: false },
         selectorsToHide: inputValue.selectorsToHide?.trim() || '',
         fullPage: inputValue.fullPage ?? true,
     };
@@ -103,34 +103,31 @@ export async function parseInput(input: Input | null): Promise<{
         return waitUntilOptions.indexOf(option as PuppeteerLifeCycleEvent) !== -1;
     }
 
-    if (!isWaitUntilOption(inputValue.waitUntil)) {
+    if (!isWaitUntilOption(parsedInput.waitUntil)) {
         await crash(
             `Value in parameter waitUntil - "${inputValue.waitUntil
             }" - is not one of the allowed values: "${waitUntilOptions.join('", "')}"`,
         );
     }
 
-    parsedInput.waitUntil = inputValue.waitUntil as PuppeteerLifeCycleEvent;
-
     // Process viewportWidth
-    if (typeof inputValue.viewportWidth !== 'number' || Number.isNaN(inputValue.viewportWidth)) {
+    const viewportWidth = inputValue.viewportWidth === undefined ? 1280 : inputValue.viewportWidth;
+    if (!Number.isInteger(viewportWidth)) {
         await crash(`Viewport width "${inputValue.viewportWidth}" is not a number.`);
     }
-    if (inputValue.viewportWidth < 100) {
+    if (viewportWidth < 100) {
         await crash(`Viewport width "${inputValue.viewportWidth}" is too small, it must be at least 100px.`);
     }
-    if (inputValue.viewportWidth > 3840) {
+    if (viewportWidth > 3840) {
         await crash(`Viewport width "${inputValue.viewportWidth}" is too large, maximum is 3840px.`);
     }
 
-    parsedInput.width = inputValue.viewportWidth;
+    parsedInput.width = viewportWidth;
 
     // Process viewportHeight
-    const viewportHeight = typeof inputValue.viewportHeight === 'number'
-        ? inputValue.viewportHeight
-        : 1080;
+    const viewportHeight = inputValue.viewportHeight === undefined ? 1080 : inputValue.viewportHeight;
 
-    if (Number.isNaN(viewportHeight)) {
+    if (!Number.isInteger(viewportHeight)) {
         await crash(`Viewport height "${inputValue.viewportHeight}" is not a number.`);
     }
     if (viewportHeight < 100) {
@@ -143,17 +140,18 @@ export async function parseInput(input: Input | null): Promise<{
     parsedInput.height = viewportHeight;
 
     // Process delay
-    if (!inputValue.delay && typeof inputValue.delay !== 'number') {
+    const delay = inputValue.delay === undefined ? 0 : inputValue.delay;
+    if (!Number.isInteger(delay)) {
         await crash(`Delay "${inputValue.delay}" is not a number.`);
     }
-    if (inputValue.delay < 0) {
+    if (delay < 0) {
         await crash(`Delay "${inputValue.delay}" is negative.`);
     }
-    if (inputValue.delay > 3600000) {
+    if (delay > 3600000) {
         await crash(`Delay "${inputValue.delay}" is too large, maximum is 3600000ms.`);
     }
 
-    parsedInput.delay = inputValue.delay;
+    parsedInput.delay = delay;
     parsedInput.scrollToBottom = inputValue.scrollToBottom || false;
     parsedInput.waitUntilNetworkIdleAfterScroll = inputValue.waitUntilNetworkIdleAfterScroll || false;
 

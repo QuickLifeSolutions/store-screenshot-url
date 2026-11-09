@@ -1,28 +1,8 @@
-export const generateUrlStoreKey = (urlString: string): string => {
-    // Extract domain from URL
-    const urlObject = new URL(urlString);
-    const domain = urlObject.hostname;
-    if (!domain) {
-        throw new Error('Invalid URL format');
-    }
+import { createHash } from 'node:crypto';
 
-    // Calculate hash of the URL
-    let urlHash = '';
-    for (let i = 0; i < urlString.length; i++) {
-        urlHash += urlString.charCodeAt(i).toString(16);
-    }
-
-    // Calculate available space for the hash in the key
-    const availableSpace = 52 - domain.length - 1; // 1 for the hyphen separator
-
-    // Truncate the hash if necessary to fit within available space
-    const truncatedHash = urlHash.substring(0, availableSpace);
-
-    // Create the key using domain and truncated hash
-    const key = `${domain}-${truncatedHash}`;
-
-    // Replace dots with hyphens and limit the length to 52 characters
-    return `screenshot-${key.replace(/\./g, '-').substring(0, 52)}`;
+export const generateUrlStoreKey = (requestKey: string): string => {
+    const hash = createHash('sha256').update(requestKey).digest('hex').slice(0, 32);
+    return `screenshot-${hash}`;
 };
 
 export const calculateRequestHandlerTimeoutSecs = (

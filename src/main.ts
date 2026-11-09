@@ -6,7 +6,16 @@ import { parseInput } from './parseInput.js';
 import type { Input } from './types.js';
 import { calculateRequestHandlerTimeoutSecs, generateUrlStoreKey } from './utils.js';
 
-const { APIFY_DEFAULT_KEY_VALUE_STORE_ID } = process.env;
+const {
+    APIFY_API_BASE_URL,
+    APIFY_API_PUBLIC_BASE_URL,
+    APIFY_DEFAULT_KEY_VALUE_STORE_ID,
+    SCREENSHOT_PUBLIC_API_BASE_URL,
+} = process.env;
+const apiBase = (SCREENSHOT_PUBLIC_API_BASE_URL || APIFY_API_PUBLIC_BASE_URL || APIFY_API_BASE_URL || 'https://api.apify.com')
+    .replace(/\/+$/, '').replace(/\/v2$/, '');
+// Bytewells accepts PNG bytes through its generic binary record parser.
+const screenshotContentType = new URL(apiBase).hostname === 'bytewells.com' ? 'application/octet-stream' : 'image/png';
 
 const NAVIGATION_TIMEOUT_SECS = 3600;
 const TIMEOUT_MS = 3600000;
@@ -44,7 +53,7 @@ const puppeteerCrawler = new PuppeteerCrawler({
     proxyConfiguration: await Actor.createProxyConfiguration(proxy),
     navigationTimeoutSecs: NAVIGATION_TIMEOUT_SECS,
     requestHandlerTimeoutSecs,
-    headless: Actor.isAtHome(),
+    headless: true,
     preNavigationHooks: [
         async ({ page }, goToOptions) => {
             goToOptions!.waitUntil = waitUntil;
@@ -53,7 +62,7 @@ const puppeteerCrawler = new PuppeteerCrawler({
             await page.setViewport({ width, height });
         },
     ],
-    requestHandler: async ({ page }) => {
+    requestHandler: async ({ page, request }) => {
         if (delay > 0) {
             log.info(`Waiting ${delay}ms as specified in input`);
             await sleep(delay);
@@ -69,7 +78,7 @@ const puppeteerCrawler = new PuppeteerCrawler({
 
                     while (stagnantIterations < 3) {
                         const { scrollHeight } = document.body;
-                        if (scrollHeight === previousScrollHeight) {
+                        if (i >= scrollHeight && scrollHeight === previousScrollHeight) {
                             stagnantIterations += 1;
                         } else {
                             stagnantIterations = 0;
@@ -89,8 +98,7 @@ const puppeteerCrawler = new PuppeteerCrawler({
                     await page.waitForNetworkIdle({ timeout: waitUntilNetworkIdleAfterScrollTimeout }).catch(() => {
                         log.warning('Waiting until network is idle after scroll failed!');
                     });
-                }
-                if (delayAfterScrolling > 0) {
+                } else if (delayAfterScrolling > 0) {
                     log.info(`Waiting ${delayAfterScrolling}ms after scroll as specified in input`);
                     await sleep(delayAfterScrolling);
                 }
@@ -116,13 +124,16 @@ const puppeteerCrawler = new PuppeteerCrawler({
         }
 
         log.info('Saving screenshot...');
-        const screenshotKey = input && input.url && !input.urls?.length ? 'screenshot' : generateUrlStoreKey(page.url());
+        const screenshotKey = input?.url && !input.urls?.length
+            ? 'screenshot'
+            : generateUrlStoreKey(request.uniqueKey);
         const screenshotBuffer = await page.screenshot({ fullPage });
-        await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: 'image/png' });
-        const screenshotUrl = `https://api.apify.com/v2/key-value-stores/${APIFY_DEFAULT_KEY_VALUE_STORE_ID}`
-            + `/records/${screenshotKey}?disableRedirect=true`;
-        log.info(`Screenshot saved, you can view it here:
-${screenshotUrl}`);
+        await Actor.setValue(screenshotKey, screenshotBuffer, { contentType: screenshotContentType });
+        const screenshotUrl = APIFY_DEFAULT_KEY_VALUE_STORE_ID
+            ? `${apiBase}/v2/key-value-stores/${APIFY_DEFAULT_KEY_VALUE_STORE_ID}`
+                + `/records/${screenshotKey}?disableRedirect=true`
+            : null;
+        log.info('Screenshot saved', { screenshotKey, screenshotUrl });
 
         await Actor.pushData({
             url: page.url(),
@@ -132,6 +143,9 @@ ${screenshotUrl}`);
     },
 });
 
-await puppeteerCrawler.run(urls);
+const result = await puppeteerCrawler.run(urls);
+if (!result.requestsFinished) {
+    await Actor.fail('No screenshots were saved. Check the run log for request failures.');
+}
 
 await Actor.exit();

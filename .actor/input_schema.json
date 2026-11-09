@@ -6,7 +6,7 @@
         "urls": {
             "title": "List of URLs",
             "description": "List of URLs you want to take screenshots of.",
-            "prefill": [ { "url": "https://www.apify.com/" } ],
+            "prefill": [ { "url": "https://example.com/" } ],
             "type": "array",
             "editor": "requestListSources"
         },
@@ -15,6 +15,7 @@
             "type": "string",
             "description": "Control's when will the browser take a screenshot",
             "prefill": "load",
+            "default": "load",
             "enum": ["load", "domcontentloaded", "networkidle2", "networkidle0"],
             "enumTitles": [
                 "Page is opened",
@@ -27,7 +28,7 @@
         "delay": {
             "title": "Delay before screenshot",
             "type": "integer",
-            "description": "Add's delay before a screenshot is taken. Mimimum is 0, maximum is 5 minutes (3600000ms)",
+            "description": "Milliseconds to wait before taking a screenshot, from 0 to 3600000.",
             "default": 0,
             "prefill": 0,
             "minimum": 0,
@@ -92,8 +93,8 @@
         "proxy": {
             "title": "Proxy configuration",
             "description": "Set the proxy configuration of the scraper",
-            "default": { "useApifyProxy": true },
-            "prefill": { "useApifyProxy": true },
+            "default": { "useApifyProxy": false },
+            "prefill": { "useApifyProxy": false },
             "type": "object",
             "editor": "proxy",
             "sectionCaption": "Advanced settings"
@@ -106,5 +107,5 @@
             "editor": "textarea"
         }
     },
-    "required": ["waitUntil"]
+    "required": []
 }

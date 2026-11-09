@@ -2,7 +2,7 @@ import { ProxyConfigurationOptions } from 'crawlee';
 
 export type Input = {
     url: string;
-    urls: string[];
+    urls: (string | { url: string })[];
     waitUntil: string;
     viewportWidth: number;
     viewportHeight: number;
